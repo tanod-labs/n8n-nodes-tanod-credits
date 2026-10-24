@@ -1,0 +1,169 @@
+name: Publish to npm
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: npm-publish-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: >-
+      github.repository == 'tanod-labs/n8n-nodes-tanod-credits' &&
+      github.event_name == 'push' &&
+      startsWith(github.ref, 'refs/tags/v') &&
+      !github.event.deleted
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    outputs:
+      tarball_sha256: ${{ steps.pack.outputs.sha256 }}
+
+    steps:
+      - name: Check out the tagged commit and main history
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Require the tagged commit to be on main
+        env:
+          RELEASE_SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$RELEASE_SHA"
+          git merge-base --is-ancestor "$RELEASE_SHA" origin/main
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '24.21.0'
+
+      - name: Validate release tag and metadata
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(node --version)" = 'v24.21.0'
+          test "$(npm --version)" = '11.19.0' # bundled with Node 24.21.0
+          node <<'NODE'
+          const assert = require('node:assert/strict');
+          const pkg = require('./package.json');
+          const lock = require('./package-lock.json');
+          assert.equal(pkg.name, 'n8n-nodes-tanod-credits');
+          assert.match(pkg.version, /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/);
+          assert.equal(process.env.RELEASE_TAG, `v${pkg.version}`);
+          assert.equal(lock.name, pkg.name);
+          assert.equal(lock.version, pkg.version);
+          assert.equal(lock.packages[''].version, pkg.version);
+          assert.equal(pkg.repository.url, 'git+https://github.com/tanod-labs/n8n-nodes-tanod-credits.git');
+          assert.deepEqual(pkg.dependencies, {});
+          assert.equal(pkg.optionalDependencies, undefined);
+          assert.deepEqual(pkg.peerDependencies, { 'n8n-workflow': '*' });
+          NODE
+
+      - name: Install locked development dependencies
+        run: npm ci --include=dev --ignore-scripts --no-audit --no-fund
+
+      - name: Typecheck
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Pack the release artifact once
+        id: pack
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir release
+          npm pack --json --ignore-scripts --pack-destination release > release/pack.json
+          node <<'NODE'
+          const fs = require('node:fs');
+          const output = JSON.parse(fs.readFileSync('release/pack.json', 'utf8'));
+          const pack = Array.isArray(output) ? output[0] : Object.values(output)[0];
+          fs.renameSync(`release/${pack.filename}`, 'release/n8n-nodes-tanod-credits.tgz');
+          NODE
+          sha256sum release/n8n-nodes-tanod-credits.tgz > release/SHA256SUMS
+          echo "sha256=$(cut -d ' ' -f 1 release/SHA256SUMS)" >> "$GITHUB_OUTPUT"
+
+      - name: Test offline using the exact release tarball
+        env:
+          TANOD_LIVE_TEST: '0'
+          TANOD_PACKAGE_TARBALL: release/n8n-nodes-tanod-credits.tgz
+        run: npm test
+
+      - name: Confirm artifact and release metadata stayed unchanged
+        run: |
+          sha256sum --check release/SHA256SUMS
+          git diff --exit-code HEAD -- package.json package-lock.json
+
+      - name: Upload the tested npm tarball
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: npm-package-${{ github.sha }}
+          path: release/n8n-nodes-tanod-credits.tgz
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0
+
+  publish:
+    needs: build
+    if: github.repository == 'tanod-labs/n8n-nodes-tanod-credits'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: npm-publish
+    permissions:
+      id-token: write
+
+    steps:
+      # No checkout, dependency install, build or package lifecycle scripts in this job.
+      - name: Download the tested npm tarball
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: npm-package-${{ github.sha }}
+          path: release
+
+      - name: Verify the build job's tarball digest
+        env:
+          EXPECTED_SHA256: ${{ needs.build.outputs.tarball_sha256 }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$EXPECTED_SHA256" =~ ^[a-f0-9]{64}$ ]]
+          printf '%s  %s\n' "$EXPECTED_SHA256" 'release/n8n-nodes-tanod-credits.tgz' | sha256sum --check
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '24.21.0'
+          registry-url: 'https://registry.npmjs.org'
+
+      # Node 24.21.0 bundles npm 11.19.0; never download a CLI with publish identity.
+      - name: Require a trusted-publishing-capable bundled npm CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(node --version)" = 'v24.21.0'
+          NPM_VERSION="$(npm --version)" node <<'NODE'
+          const assert = require('node:assert/strict');
+          const version = process.env.NPM_VERSION;
+          assert.match(version, /^\d+\.\d+\.\d+$/);
+          const [major, minor, patch] = version.split('.').map(Number);
+          assert(major > 11 || (major === 11 && (minor > 5 || (minor === 5 && patch >= 1))),
+            'npm >=11.5.1 is required for trusted publishing');
+          NODE
+
+      # Bind npm trusted publishing to publish.yml and the npm-publish environment.
+      - name: Publish the exact tested tarball with provenance
+        run: npm publish ./release/n8n-nodes-tanod-credits.tgz --provenance --access public --ignore-scripts --registry=https://registry.npmjs.org

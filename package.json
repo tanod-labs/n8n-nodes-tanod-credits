@@ -1,0 +1,59 @@
+{
+  "name": "n8n-nodes-tanod-credits",
+  "version": "0.1.0",
+  "description": "n8n community node for Tanod document, web, audio, text and email tools using prepaid credit keys.",
+  "license": "MIT",
+  "homepage": "https://tanod.dev/connect/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tanod-labs/n8n-nodes-tanod-credits.git"
+  },
+  "keywords": [
+    "n8n-community-node-package",
+    "n8n",
+    "tanod",
+    "pdf",
+    "ocr",
+    "markdown",
+    "screenshot",
+    "transcription"
+  ],
+  "author": {
+    "name": "Tanod",
+    "email": "ops@tanod.dev"
+  },
+  "main": "index.js",
+  "files": [
+    "dist",
+    "index.js"
+  ],
+  "engines": {
+    "node": ">=20.15"
+  },
+  "scripts": {
+    "build": "rm -rf dist && tsc && node scripts/copy-assets.js",
+    "dev": "tsc --watch",
+    "lint": "tsc --noEmit",
+    "test": "node --test --test-concurrency=1 test/*.test.js",
+    "prepublishOnly": "npm run build"
+  },
+  "n8n": {
+    "n8nNodesApiVersion": 1,
+    "strict": true,
+    "credentials": [
+      "dist/credentials/TanodCreditsOnlyApi.credentials.js"
+    ],
+    "nodes": [
+      "dist/nodes/TanodCredits/TanodCredits.node.js"
+    ]
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "n8n-workflow": "2.16.0",
+    "typescript": "^5.6.0"
+  },
+  "peerDependencies": {
+    "n8n-workflow": "*"
+  }
+}

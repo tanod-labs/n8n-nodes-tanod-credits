@@ -1,0 +1,166 @@
+{
+  "apiDocumentation": "https://tanod.dev/openapi.json",
+  "operations": {
+    "toMarkdown": {
+      "fields": [
+        "characters",
+        "columns_detected",
+        "fill_skipped",
+        "format",
+        "input_bytes",
+        "markdown",
+        "merged_ranges",
+        "merged_ranges_truncated",
+        "note",
+        "operation",
+        "pages",
+        "sheets",
+        "size",
+        "slides",
+        "title",
+        "truncated",
+        "untrusted_content"
+      ]
+    },
+    "pdfTables": {
+      "fields": [
+        "file",
+        "file_count",
+        "files",
+        "format",
+        "input_bytes",
+        "input_pages",
+        "operation",
+        "output_bytes",
+        "pages_failed",
+        "pages_processed",
+        "pages_without_text",
+        "size",
+        "table_count",
+        "tables",
+        "untrusted_content",
+        "warnings"
+      ]
+    },
+    "ocrImage": {
+      "fields": [
+        "confidence_mean",
+        "final_url",
+        "format",
+        "height",
+        "lang",
+        "text",
+        "truncated",
+        "untrusted_content",
+        "url",
+        "width",
+        "words"
+      ]
+    },
+    "pdfToWord": {
+      "fields": [
+        "converted_pages",
+        "fidelity_note",
+        "file",
+        "input_bytes",
+        "input_pages",
+        "operation",
+        "output_bytes",
+        "pages_without_text",
+        "untrusted_content",
+        "warnings"
+      ]
+    },
+    "officeToPdf": {
+      "fields": [
+        "active_content_removed",
+        "fidelity_note",
+        "file",
+        "format",
+        "input_bytes",
+        "operation",
+        "output_bytes",
+        "pages",
+        "untrusted_content"
+      ]
+    },
+    "pageToMarkdown": {
+      "fields": [
+        "final_url",
+        "format",
+        "markdown",
+        "status",
+        "title",
+        "truncated",
+        "untrusted_content",
+        "url"
+      ]
+    },
+    "screenshot": {
+      "fields": [
+        "dark_mode",
+        "file",
+        "format",
+        "full_page",
+        "height",
+        "height_capped",
+        "operation",
+        "output_bytes",
+        "untrusted_content",
+        "url",
+        "width"
+      ]
+    },
+    "speechToText": {
+      "fields": [
+        "chapters",
+        "chapters_info",
+        "duration",
+        "input_bytes",
+        "language",
+        "language_probability",
+        "model",
+        "operation",
+        "segments",
+        "speakers",
+        "srt",
+        "text",
+        "text_language",
+        "translated_to_english",
+        "truncated",
+        "untrusted_content",
+        "vtt"
+      ]
+    },
+    "translate": {
+      "fields": [
+        "chars",
+        "detected",
+        "engine",
+        "source_lang",
+        "target_lang",
+        "text"
+      ]
+    },
+    "verifyEmail": {
+      "fields": [
+        "disposable",
+        "domain",
+        "email",
+        "free_provider",
+        "has_mx",
+        "implicit_mx",
+        "local_part",
+        "mx_hosts",
+        "normalized",
+        "notes",
+        "null_mx",
+        "reasons",
+        "role_account",
+        "smtp_checked",
+        "syntax_valid",
+        "verdict"
+      ]
+    }
+  }
+}
