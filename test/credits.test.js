@@ -193,7 +193,8 @@ for (const [code, expected] of [
   ['unsupported_encoding', /encoding is not supported/], ['pdf_encrypted', /PDF is encrypted/],
   ['encrypted_document', /document is encrypted/], ['unsupported_encryption', /encryption is not supported/],
   ['rate_limited', /request limit/], ['busy', /at capacity/], ['queue_full', /at capacity/],
-  ['micro_unavailable', /temporarily unavailable/], ['timeout', /took too long/], ['__proto__', /not accepted/],
+  ['micro_unavailable', /temporarily unavailable/], ['micro_interrupted', /stopped before it finished/],
+  ['read_timeout', /ran out of time/], ['token_views_failed', /could not be read in time/], ['timeout', /took too long/], ['__proto__', /not accepted/],
   ['constructor', /not accepted/], [KEY, /not accepted/],
 ]) test(`allowlisted response ${code.slice(0, 24)} selects a fixed actionable message`, async () => {
   const m = context({ status: 422, body: { error: { code, message: KEY } } });

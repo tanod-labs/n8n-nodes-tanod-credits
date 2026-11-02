@@ -22,6 +22,9 @@ const ERROR_MESSAGES: Record<string, string> = {
 	queue_full: 'the service is at capacity. Try again later.',
 	timeout: 'the service took too long to respond. Try again later.',
 	micro_unavailable: 'the service is temporarily unavailable. Try again later.',
+	micro_interrupted: 'the service stopped before it finished. Try again later.',
+	read_timeout: 'the request ran out of time. Use a smaller request or try again later.',
+	token_views_failed: 'the token could not be read in time. Try again later.',
 };
 
 /** No wallet SDK, automatic retries, free-tier fallback, or configurable credential destination. */
